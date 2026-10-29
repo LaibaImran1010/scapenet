@@ -45,7 +45,9 @@ Deep Learning semester project. A convolutional neural network, **trained from s
 ├── notebooks/train.ipynb           data download, training, evaluation
 ├── weights/
 │   ├── model_scratch.keras         final model
-│   └── model_pretrained.keras      comparison model
+│   ├── model_pretrained.keras      comparison model
+│   ├── scratch.onnx                final model in browser format
+│   └── pretrained.onnx             comparison model in browser format
 └── space/
     └── app.py                      code running on the Hugging Face Space
 ```
@@ -66,12 +68,17 @@ To retrain, open `notebooks/train.ipynb` in Google Colab with a GPU, upload your
 ## How the website works
 
 1. The user uploads a photo on the website.
-2. The page sends it to the Hugging Face Space through its API.
-3. The Space resizes the photo to 150 x 150, runs the model and returns six probabilities.
+2. The page loads the ONNX model file (`weights/scratch.onnx` or `weights/pretrained.onnx`) into the browser with ONNX Runtime Web.
+3. The photo is resized to 150 x 150 and the model runs on the visitor's device, so no server or quota is needed. The page shows six probabilities.
 4. The page shows the top class and a confidence bar for every class.
+
+## Browser version of the models
+
+The Keras models were exported to ONNX (`scratch.onnx`, `pretrained.onnx`) after removing the training-only augmentation layers, and the outputs were checked against the Keras models. The Hugging Face Space in `space/app.py` is an optional server-hosted version of the same demo.
 
 ## Limitations
 
 - The model only knows these six scene types, so other photos still receive one of the six labels.
 - Glacier and mountain photos are the most often confused.
-- The first prediction after a pause can take up to 40 seconds while the Space wakes up.
+- The first prediction loads the model file and can take a few seconds.
+

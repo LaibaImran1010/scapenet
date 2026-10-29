@@ -101,11 +101,11 @@ footer{background:var(--navy);color:#c9d8e8;padding:28px 0;font-size:14px}
 </div></section>
 
 <section class="block" id="how"><div class="wrap">
- <h2>How it works</h2><p class="sub">The website sends your photo to a model server and shows the probabilities it returns.</p>
+ <h2>How it works</h2><p class="sub">The model runs inside your browser, so your photo never leaves your device.</p>
  <div class="steps">
   <div class="card"><div class="n">1</div><h3>Upload</h3><p>Choose a photo on this page.</p></div>
-  <div class="card"><div class="n">2</div><h3>Send</h3><p>The page calls our Hugging Face Space.</p></div>
-  <div class="card"><div class="n">3</div><h3>Predict</h3><p>The model returns six probabilities.</p></div>
+  <div class="card"><div class="n">2</div><h3>Load</h3><p>The page loads the model file into your browser.</p></div>
+  <div class="card"><div class="n">3</div><h3>Predict</h3><p>The model runs on your device and returns six probabilities.</p></div>
   <div class="card"><div class="n">4</div><h3>Show</h3><p>Top class and a bar for every class.</p></div>
  </div>
 </div></section>
@@ -153,16 +153,17 @@ footer{background:var(--navy);color:#c9d8e8;padding:28px 0;font-size:14px}
 </div></section>
 </main>
 
-<footer><div class="wrap">ScapeNet, a Deep Learning semester project. The models know only six scene types, so any other photo still receives one of those six labels. The first prediction after a pause can take up to 40 seconds while the model server wakes up.</div></footer>
+<footer><div class="wrap">ScapeNet, a Deep Learning semester project. The models know only six scene types, so any other photo still receives one of those six labels. The first prediction loads the model file and can take a few seconds.</div></footer>
 
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
 <script>
-const SPACE="https://laibaimran-scene-classifier.hf.space";
+ort.env.wasm.wasmPaths="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/";ort.env.wasm.numThreads=1;
 const LINKS=[
  {l:"GitHub repository",n:"Code, weights and notebook",u:"https://github.com/LaibaImran1010/scapenet"},
- {l:"Model server",n:"Hugging Face Space",u:"https://huggingface.co/spaces/laibaimran/scene-classifier"},
+ {l:"Hugging Face Space",n:"Server-hosted version of the demo",u:"https://huggingface.co/spaces/laibaimran/scene-classifier"},
  {l:"Dataset",n:"Intel Image Classification on Kaggle",u:"https://www.kaggle.com/datasets/puneet6060/intel-image-classification"},
- {l:"Project report",n:"Full written report",u:""},
- {l:"Presentation",n:"Slides",u:""},
+ {l:"Project report",n:"Full written report (PDF)",u:"docs/ScapeNet_Report.pdf"},
+ {l:"Presentation",n:"Slides (PDF)",u:"docs/ScapeNet_Slides.pdf"},
  {l:"YouTube video",n:"Five-minute explanation",u:""}
 ];
 const MODELS={
@@ -181,6 +182,7 @@ const DIFF=[
  ["Hugging Face","CPU hardware needs a PRO plan","Used free ZeroGPU with the spaces.GPU decorator"],
  ["Hugging Face","Runtime error: no module named keras","requirements.txt had never been created; added it as a real file"],
  ["Hugging Face","Error: GPU task aborted","Loaded the model inside the GPU function"],
+ ["Hugging Face","Website visitors exceeded the free ZeroGPU limit","Exported both models to ONNX and run them inside the browser, so no server quota applies"],
  ["GitHub","Push rejected because the remote repository already had a file","Pulled the remote changes, then pushed again"]
 ];
 const $=id=>document.getElementById(id);
@@ -209,23 +211,31 @@ fi.addEventListener("change",()=>setFile(fi.files[0]));
 drop.addEventListener("drop",ev=>setFile(ev.dataTransfer.files[0]));
 $("reset").addEventListener("click",()=>{current=null;fi.value="";pv.removeAttribute("src");drop.classList.remove("has-image");go.disabled=true;res.innerHTML="";res.className=""});
 function msg(t,err){res.className="";res.innerHTML=`<p class="status${err?" err":""}"></p>`;res.firstChild.textContent=t}
-async function upload(f){const fd=new FormData();fd.append("files",f);const r=await fetch(SPACE+"/gradio_api/upload",{method:"POST",body:fd});
- if(!r.ok)throw new Error("upload "+r.status);return (await r.json())[0]}
-async function run(path,which){const c=await fetch(SPACE+"/gradio_api/call/predict",{method:"POST",headers:{"Content-Type":"application/json"},
- body:JSON.stringify({data:[{path,meta:{_type:"gradio.FileData"}},which]})});if(!c.ok)throw new Error("call "+c.status);
- const {event_id}=await c.json();const t=await (await fetch(SPACE+"/gradio_api/call/predict/"+event_id)).text();
- for(const b of t.split("\n\n")){const ev=(b.match(/^event: (.*)$/m)||[])[1],d=(b.match(/^data: (.*)$/m)||[])[1];
-  if(ev==="complete")return JSON.parse(d)[0];if(ev==="error")throw new Error("model "+d)}throw new Error("no result")}
+const MODEL_FILES={scratch:"weights/scratch.onnx",pretrained:"weights/pretrained.onnx"};
+const CLASSES=["buildings","forest","glacier","mountain","sea","street"];
+const sessions={};
+async function session(k){if(!sessions[k])sessions[k]=await ort.InferenceSession.create(MODEL_FILES[k],{executionProviders:["wasm"]});return sessions[k]}
+async function run(file,which){
+ const s=await session(which),bm=await createImageBitmap(file),c=document.createElement("canvas");
+ c.width=c.height=150;const g=c.getContext("2d");g.drawImage(bm,0,0,150,150);const d=g.getImageData(0,0,150,150).data,n=22500;
+ const a=new Float32Array(n*3),b=new Float32Array(n*3);
+ for(let i=0;i<n;i++){const r=d[i*4],gr=d[i*4+1],bl=d[i*4+2];a[i*3]=r;a[i*3+1]=gr;a[i*3+2]=bl;b[i]=r;b[n+i]=gr;b[2*n+i]=bl}
+ const name=s.inputNames[0];let out;
+ try{out=await s.run({[name]:new ort.Tensor("float32",a,[1,150,150,3])})}catch(e){out=await s.run({[name]:new ort.Tensor("float32",b,[1,3,150,150])})}
+ let p=Array.from(out[s.outputNames[0]].data);
+ if(p.some(v=>v<0||v>1)){const m=Math.max(...p),e=p.map(v=>Math.exp(v-m)),t=e.reduce((x,y)=>x+y,0);p=e.map(v=>v/t)}
+ return {confidences:CLASSES.map((l,i)=>({label:l,confidence:p[i]}))}}
 function card(k,o){const rows=o.confidences.slice().sort((a,b)=>b.confidence-a.confidence),t=rows[0];
  return `<article class="res"><h3>${MODELS[k].name}</h3><p class="verdict">${t.label}<small>${Math.round(t.confidence*100)}% confident</small></p>`+
  rows.map((r,i)=>`<div class="bar${i?"":" top"}"><span>${r.label}</span><span class="track"><span class="fill" data-w="${(r.confidence*100).toFixed(1)}"></span></span><span class="pct">${Math.round(r.confidence*100)}%</span></div>`).join("")+"</article>"}
 go.addEventListener("click",async()=>{if(!current)return;go.disabled=true;
- msg("Classifying. The first photo can take up to 40 seconds while the model wakes up.");
- try{const path=await upload(current),list=mode==="both"?["scratch","pretrained"]:[mode];let html="";
-  for(const k of list){const o=await run(path,k);html+=card(k,o);res.className=list.length>1?"two":"";res.innerHTML=html;
+ msg("Classifying. The first photo takes a few seconds while the model loads.");
+ try{const list=mode==="both"?["scratch","pretrained"]:[mode];let html="";
+  for(const k of list){const o=await run(current,k);html+=card(k,o);res.className=list.length>1?"two":"";res.innerHTML=html;
    requestAnimationFrame(()=>res.querySelectorAll(".fill").forEach(e=>e.style.width=e.dataset.w+"%"))}
- }catch(e){msg("The model server did not answer. Wait a minute and try again. If it keeps failing, open the model server link below to wake it up.",1);console.error(e)}
+ }catch(e){msg("The model could not run ("+(e&&e.message?e.message:JSON.stringify(e))+"). Reload the page and try again.",1);console.error(e)}
  go.disabled=false});
 </script>
 </body>
 </html>
+
