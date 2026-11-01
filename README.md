@@ -6,7 +6,7 @@ Deep Learning semester project. A convolutional neural network, **trained from s
 
 | What | Link |
 |---|---|
-| Website (Vercel) | ADD VERCEL URL |
+| Website (Vercel) | https://scapenet-mu.vercel.app |
 | Model server (Hugging Face Space) | https://huggingface.co/spaces/laibaimran/scene-classifier |
 | Project report | [docs/ScapeNet_Report.pdf](docs/ScapeNet_Report.pdf) |
 | Presentation slides | [docs/ScapeNet_Slides.pdf](docs/ScapeNet_Slides.pdf) |
