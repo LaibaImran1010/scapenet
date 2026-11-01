@@ -7,10 +7,12 @@ Deep Learning semester project. A convolutional neural network, **trained from s
 | What | Link |
 |---|---|
 | Website (Vercel) | https://scapenet-mu.vercel.app |
+| GitHub repository | https://github.com/LaibaImran1010/scapenet |
+| YouTube video | https://youtu.be/O0i6o2D6VdA |
+| LinkedIn post | https://lnkd.in/p/dnBvDGJf |
+| Project report (PDF) | [docs/ScapeNet_Report.pdf](docs/ScapeNet_Report.pdf) |
+| Presentation slides (PDF) | [docs/ScapeNet_Slides.pdf](docs/ScapeNet_Slides.pdf) |
 | Model server (Hugging Face Space) | https://huggingface.co/spaces/laibaimran/scene-classifier |
-| Project report | [docs/ScapeNet_Report.pdf](docs/ScapeNet_Report.pdf) |
-| Presentation slides | [docs/ScapeNet_Slides.pdf](docs/ScapeNet_Slides.pdf) |
-| Presentation and voiceover (YouTube) | https://youtu.be/3KaYEHFO9mk |
 | Dataset (Kaggle) | https://www.kaggle.com/datasets/puneet6060/intel-image-classification |
 
 ## Dataset
@@ -35,25 +37,29 @@ Deep Learning semester project. A convolutional neural network, **trained from s
 ## Repository structure
 
 ```
-.
+scapenet/
 ├── README.md
 ├── requirements.txt
-├── index.html                      website (deployed on Vercel)
-├── scratch_confusion_matrix.png
-├── scratch_accuracy_curve.png
-├── pretrained_confusion_matrix.png
-├── pretrained_accuracy_curve.png
+├── vercel.json                     serves the website as a static site on Vercel
+├── index.html                      the website
+├── scratch_confusion_matrix.png    self-trained CNN, confusion matrix
+├── scratch_accuracy_curve.png      self-trained CNN, accuracy per epoch
+├── pretrained_confusion_matrix.png pretrained MobileNetV2, confusion matrix
+├── pretrained_accuracy_curve.png   pretrained MobileNetV2, accuracy per epoch
 ├── docs/
 │   ├── ScapeNet_Report.pdf         final project report
 │   └── ScapeNet_Slides.pdf         presentation slides
-├── notebooks/train.ipynb           data download, training, evaluation
-├── weights/
-│   ├── model_scratch.keras         final model
-│   ├── model_pretrained.keras      comparison model
-│   ├── scratch.onnx                final model in browser format
-│   └── pretrained.onnx             comparison model in browser format
-└── space/
-    └── app.py                      code running on the Hugging Face Space
+├── notebooks/
+│   └── train.ipynb                 data download, training, evaluation
+├── space/
+│   └── app.py                      code running on the Hugging Face Space
+├── videos/
+│   └── scapenet-youtube.mp4        project video (also on YouTube)
+└── weights/
+    ├── model_scratch.keras         final model (Keras)
+    ├── model_pretrained.keras      comparison model (Keras)
+    ├── scratch.onnx                final model in browser format
+    └── pretrained.onnx             comparison model in browser format
 ```
 
 ## Run it yourself
