@@ -8,8 +8,9 @@ Deep Learning semester project. A convolutional neural network, **trained from s
 |---|---|
 | Website (Vercel) | ADD VERCEL URL |
 | Model server (Hugging Face Space) | https://huggingface.co/spaces/laibaimran/scene-classifier |
-| Project report | ADD REPORT LINK |
-| Presentation and voiceover (YouTube) | ADD YOUTUBE LINK |
+| Project report | [docs/ScapeNet_Report.pdf](docs/ScapeNet_Report.pdf) |
+| Presentation slides | [docs/ScapeNet_Slides.pdf](docs/ScapeNet_Slides.pdf) |
+| Presentation and voiceover (YouTube) | https://youtu.be/3KaYEHFO9mk |
 | Dataset (Kaggle) | https://www.kaggle.com/datasets/puneet6060/intel-image-classification |
 
 ## Dataset
@@ -42,6 +43,9 @@ Deep Learning semester project. A convolutional neural network, **trained from s
 ├── scratch_accuracy_curve.png
 ├── pretrained_confusion_matrix.png
 ├── pretrained_accuracy_curve.png
+├── docs/
+│   ├── ScapeNet_Report.pdf         final project report
+│   └── ScapeNet_Slides.pdf         presentation slides
 ├── notebooks/train.ipynb           data download, training, evaluation
 ├── weights/
 │   ├── model_scratch.keras         final model
@@ -81,4 +85,3 @@ The Keras models were exported to ONNX (`scratch.onnx`, `pretrained.onnx`) after
 - The model only knows these six scene types, so other photos still receive one of the six labels.
 - Glacier and mountain photos are the most often confused.
 - The first prediction loads the model file and can take a few seconds.
-
